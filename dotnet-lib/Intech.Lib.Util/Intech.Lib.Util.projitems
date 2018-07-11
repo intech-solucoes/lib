@@ -1,0 +1,32 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="SharedProjectFile_SccProperties">
+    <SharedProjectFile_ProjectGuid>{18f50d90-f776-44e4-92c4-57f87f8ab7f8}</SharedProjectFile_ProjectGuid>
+    <SharedProjectFile_SccProjectName>SAK</SharedProjectFile_SccProjectName>
+    <SharedProjectFile_SccAuxPath>SAK</SharedProjectFile_SccAuxPath>
+    <SharedProjectFile_SccLocalPath>SAK</SharedProjectFile_SccLocalPath>
+    <SharedProjectFile_SccProvider>SAK</SharedProjectFile_SccProvider>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>73968e62-3181-49ac-8c2d-81331534bc6e</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Intech.Lib.Util</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Date\CalculoAnosMesesDiasAlgoritmo1.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Date\CalculoAnosMesesDiasAlgoritmo2.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Date\CalculoAnosMesesDiasStrategy.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Date\IPeriodo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Email\ConfigEmail.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Email\EnvioEmail.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensoes\DateTimeExtensoes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensoes\DecimalExtensoes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Extensoes\StringExtensoes.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Date\Intervalo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Date\MesAno.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Seguranca\Criptografia.cs" />
+  </ItemGroup>
+</Project>

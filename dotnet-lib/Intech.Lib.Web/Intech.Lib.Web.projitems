@@ -1,0 +1,27 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup Label="SharedProjectFile_SccProperties">
+    <SharedProjectFile_ProjectGuid>{4fff4124-ce82-45df-b989-201d106a7a14}</SharedProjectFile_ProjectGuid>
+    <SharedProjectFile_SccProjectName>SAK</SharedProjectFile_SccProjectName>
+    <SharedProjectFile_SccAuxPath>SAK</SharedProjectFile_SccAuxPath>
+    <SharedProjectFile_SccLocalPath>SAK</SharedProjectFile_SccLocalPath>
+    <SharedProjectFile_SccProvider>SAK</SharedProjectFile_SccProvider>
+  </PropertyGroup>
+  <PropertyGroup>
+    <MSBuildAllProjects>$(MSBuildAllProjects);$(MSBuildThisFileFullPath)</MSBuildAllProjects>
+    <HasSharedItems>true</HasSharedItems>
+    <SharedGUID>17fb1551-d800-46e6-8b2f-3a19bbb43eba</SharedGUID>
+  </PropertyGroup>
+  <PropertyGroup Label="Configuration">
+    <Import_RootNamespace>Intech.Lib.Web</Import_RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)AppSettings.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Entidades\EmailEntidade.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JWT\AuthenticationToken.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JWT\JsonWebToken.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JWT\JwtIssuerOptions.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JWT\SigningConfigurations.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)JWT\TokenConfigurations.cs" />
+  </ItemGroup>
+</Project>
