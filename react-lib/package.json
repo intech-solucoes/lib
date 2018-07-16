@@ -1,7 +1,7 @@
 {
     "name": "react-lib",
     "version": "1.0.0",
-    "module": "index.js",
+    "module": "dist/index.js",
     "author": "Rony Moura<ronymmoura@gmail.com>",
     "license": "MIT",
     "scripts": {
