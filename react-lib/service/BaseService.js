@@ -10,7 +10,7 @@ export default class BaseService {
             try {
                 try {
                     var ReactNative = require("react-native");
-                    ReactNative.AsyncStorage.getItem("token", (err, result) => resolve(result));
+                    ReactNative.AsyncStorage.getItem("token", (err, result) => err ? reject(err) : resolve(result));
                 } catch(e) {
                     var token = localStorage.getItem("token");
                     resolve(token);

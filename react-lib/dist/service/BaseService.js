@@ -29,7 +29,7 @@ var BaseService = function () {
                     try {
                         var ReactNative = require("react-native");
                         ReactNative.AsyncStorage.getItem("token", function (err, result) {
-                            return resolve(result);
+                            return err ? reject(err) : resolve(result);
                         });
                     } catch (e) {
                         var token = localStorage.getItem("token");
