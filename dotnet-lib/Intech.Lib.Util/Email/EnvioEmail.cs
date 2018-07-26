@@ -1,9 +1,11 @@
 ﻿#region Usings
+using MimeKit;
+using MimeKit.Text;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
-using System.Text; 
+using System.Text;
 #endregion
 
 namespace Intech.Lib.Util.Email
@@ -79,6 +81,7 @@ namespace Intech.Lib.Util.Email
 
             if (config.RequerAutenticacao)
             {
+                smtp.UseDefaultCredentials = false;
                 if (config.AutenticacaoUsaDominio)
                     smtp.Credentials = new NetworkCredential(config.Usuario, config.Senha, config.EnderecoSMTP);
                 else
@@ -106,6 +109,34 @@ namespace Intech.Lib.Util.Email
             corpo.Append("</html>");
 
             return corpo.ToString();
+        }
+
+        public static void EnviarMailKit(ConfigEmail config, string para, string assunto, string corpo)
+        {
+            var message = new MimeMessage();
+            message.From.Add(new MailboxAddress(config.EmailRemetente));
+            message.To.Add(new MailboxAddress(para));
+            message.Subject = assunto;
+
+            message.Body = new TextPart(TextFormat.Html)
+            {
+                Text = corpo
+            };
+
+            using (var client = new MailKit.Net.Smtp.SmtpClient())
+            {
+                // For demo-purposes, accept all SSL certificates (in case the server supports STARTTLS)
+                if(config.DesprezarCertificado)
+                    client.ServerCertificateValidationCallback = (s, c, h, e) => true;
+
+                client.Connect(config.EnderecoSMTP, config.Porta, MailKit.Security.SecureSocketOptions.StartTls);
+
+                // Note: only needed if the SMTP server requires authentication
+                client.Authenticate(config.Usuario, config.Senha);
+
+                client.Send(message);
+                client.Disconnect(true);
+            }
         }
     }
 }
