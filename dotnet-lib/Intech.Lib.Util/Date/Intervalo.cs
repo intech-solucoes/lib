@@ -40,6 +40,8 @@ namespace Intech.Lib.Util.Date
             private set { _anos = value; }
         }
 
+        public int TotalMeses => Anos * 12 + Meses;
+
         public CalculoAnosMesesDiasStrategy Strategy { get; private set; }
 
         #endregion

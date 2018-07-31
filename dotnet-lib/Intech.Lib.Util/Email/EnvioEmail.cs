@@ -79,6 +79,7 @@ namespace Intech.Lib.Util.Email
 
             if (config.RequerAutenticacao)
             {
+                smtp.UseDefaultCredentials = false;
                 if (config.AutenticacaoUsaDominio)
                     smtp.Credentials = new NetworkCredential(config.Usuario, config.Senha, config.EnderecoSMTP);
                 else
