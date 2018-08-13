@@ -61,4 +61,8 @@ export default class BaseService {
                 });
         });
     }
+
+    FormatarData(data) {
+        return data.replace(new RegExp('/', 'g'), '.');
+    }
 }

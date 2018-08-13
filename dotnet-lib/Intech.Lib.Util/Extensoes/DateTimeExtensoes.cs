@@ -165,6 +165,28 @@ namespace System
             || feriados.Contains(data);
 
         /// <summary>
+        /// Adiciona uma quantidade de dias uteis na data
+        /// </summary>
+        /// <param name="data">data alvo</param>
+        /// <param name="qtdDias">quantidade de dias a adicionar</param>
+        /// <param name="feriados">lista de feriados</param>
+        /// <returns></returns>
+        public static DateTime AddDiaUtil(this DateTime data, int qtdDias, IEnumerable<DateTime> feriados)
+        {
+            int qtdDiasUteis = 1;
+
+            while (qtdDias >= qtdDiasUteis)
+            {
+                data = data.AddDays(1);
+
+                if (data.EhDiaUtil(feriados) == true)
+                    qtdDiasUteis = qtdDiasUteis + 1;
+            }
+
+            return data;
+        }
+
+        /// <summary>
         /// Retorna o número total de dias entre duas datas
         /// </summary>
         /// <param name="dataInicial"></param>
