@@ -1,21 +1,20 @@
 import axios from "axios";
 
-export default class BaseService {
-    constructor(config) {
-        this.config = config;
-    }
+const apiUrl = process.env.API_URL;
 
+export default class BaseService {
     GetToken() {
         return new Promise((resolve, reject) => {
             try {
-                try {
-                    var ReactNative = require("react-native");
-                    ReactNative.AsyncStorage.getItem("token", (err, result) => err ? reject(err) : resolve(result));
-                } catch(e) {
+                if(localStorage) {
                     var token = localStorage.getItem("token");
                     resolve(token);
+                } else {
+                    var ReactNative = require("react-native");
+                    ReactNative.AsyncStorage.getItem("token", (err, result) => err ? reject(err) : resolve(result));
                 }
-            } catch(e) {
+            }
+            catch(e) {
                 reject(e);
             }
         });
@@ -28,7 +27,7 @@ export default class BaseService {
 
                     axios({
                         method: tipo,
-                        url: this.config.apiUrl + url,
+                        url: apiUrl + url,
                         data: data,
                         headers: {
                             "Authorization": "Bearer " + token
@@ -48,7 +47,7 @@ export default class BaseService {
 
                     axios({
                         method: tipo,
-                        url: this.config.apiUrl + url,
+                        url: apiUrl + url,
                         data: data,
                         headers: {
                             "Authorization": "Bearer " + token
