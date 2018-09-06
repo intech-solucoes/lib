@@ -17,6 +17,10 @@ namespace Intech.Lib.Web
 
         public ConfigEmail Email { get; set; }
 
+        public string PublicacaoPortal { get; set; }
+
+        public string PublicacaoAPI { get; set; }
+
         public static AppSettings Get()
         {
             var file = File.ReadAllText(NomeArquivo);
