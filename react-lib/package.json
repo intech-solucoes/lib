@@ -1,6 +1,6 @@
 {
 	"name": "@intechprev/react-lib",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"main": "index.js",
 	"author": "Rony Moura <ronymmoura@gmail.com>",
 	"license": "MIT",
