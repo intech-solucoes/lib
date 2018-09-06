@@ -16,6 +16,7 @@
     <Import_RootNamespace>Intech.Lib.Data</Import_RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="$(MSBuildThisFileDirectory)Erros\ErrosBanco.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util\Tradutor\TipoToken.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util\Tradutor\Token.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Util\Tradutor\Tokenizer.cs" />
