@@ -1,6 +1,8 @@
 ﻿#region Usings
 using MimeKit;
 using MimeKit.Text;
+using System;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Security;
@@ -111,11 +113,20 @@ namespace Intech.Lib.Util.Email
             return corpo.ToString();
         }
 
-        public static void EnviarMailKit(ConfigEmail config, string para, string assunto, string corpo)
+        public static void EnviarMailKit(ConfigEmail config, string destinatario, string assunto, string corpo)
+        {
+            var listaDestinatarios = new List<string> { destinatario };
+            EnviarMailKit(config, listaDestinatarios, assunto, corpo);
+        }
+
+        public static void EnviarMailKit(ConfigEmail config, List<string> listaDestinatarios, string assunto, string corpo)
         {
             var message = new MimeMessage();
             message.From.Add(new MailboxAddress(config.EmailRemetente));
-            message.To.Add(new MailboxAddress(para));
+
+            foreach(var destinatario in listaDestinatarios)
+                message.To.Add(new MailboxAddress(destinatario));
+
             message.Subject = assunto;
 
             message.Body = new TextPart(TextFormat.Html)
@@ -126,7 +137,7 @@ namespace Intech.Lib.Util.Email
             using (var client = new MailKit.Net.Smtp.SmtpClient())
             {
                 // For demo-purposes, accept all SSL certificates (in case the server supports STARTTLS)
-                if(config.DesprezarCertificado)
+                if (config.DesprezarCertificado)
                     client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
                 client.Connect(config.EnderecoSMTP, config.Porta, MailKit.Security.SecureSocketOptions.StartTls);

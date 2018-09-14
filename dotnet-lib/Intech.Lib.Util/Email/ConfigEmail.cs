@@ -3,6 +3,7 @@
     public class ConfigEmail
     {
         public string EmailRemetente { get; set; }
+        public string EmailRelacionamento { get; set; }
         public string NomeExibicao { get; set; }
         public string EnderecoSMTP { get; set; }
         public int Porta { get; set; }
