@@ -1,4 +1,5 @@
 ﻿using Intech.Lib.Util.Date;
+using Intech.PrevSystem.Entidades;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,9 +33,9 @@ namespace System
         /// </summary>
         /// <param name="data"></param>
         /// <returns></returns>
-        public static String MesPorExtenso(this DateTime data) => MesPorExtenso(data.Month.ToString());
+        public static string MesPorExtenso(this DateTime data) => MesPorExtenso(data.Month.ToString());
 
-        public static String MesPorExtenso(string mes)
+        public static string MesPorExtenso(string mes)
         {
             string[] meses = {"Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro",
                 "Outubro", "Novembro", "Dezembro"};
@@ -197,6 +198,71 @@ namespace System
             TimeSpan diferencaDatas = dataFinal.Subtract(dataInicial);
             //o "+ 1" serve para incluir o dia inicial no total
             return diferencaDatas.Days + 1;
+        }
+
+        public static int UltimoDiaUtilDoMes (this DateTime data, IEnumerable<FeriadoEntidade> feriados)
+        {
+            DateTime dtTemp = new DateTime(data.Year, data.Month, UltimoDiaDoMes(data).Day);
+
+            if (!EhDiaUtil(dtTemp, feriados.Select(x => x.DT_FERIADO)))
+                return BuscarDataUtil(dtTemp, feriados, Direcao.Anterior, null).Day;
+            else
+                return dtTemp.Day;
+        }
+
+        public enum Estado { AC, AL, AP, AM, BA, CE, DF, GO, ES, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SP, SC, SE, TO };
+
+        public enum Direcao
+        {
+            Posterior,
+            Anterior
+        };
+
+        /// <summary>
+        /// BuscarDataUtil
+        /// Retorna a data útil anterior ou posterior à 'dataBase'
+        /// Reversa da função Dt_Data_Util do sistema em Delphi
+        /// </summary>
+        public static DateTime BuscarDataUtil(DateTime dataBase, IEnumerable<FeriadoEntidade> feriados, Direcao direcao, Estado? estado)
+        {
+            DateTime dtTmp = dataBase;
+            string estadoTmp;
+            const string todos = "";
+
+            estadoTmp = estado.HasValue ? estado.Value.ToString() : todos;
+
+            while (true)
+            {
+                if (direcao == Direcao.Posterior)
+                    dtTmp = dtTmp.AddDays(1);
+                else
+                    dtTmp = dtTmp.AddDays(-1);
+
+
+                if (dtTmp.DayOfWeek == DayOfWeek.Sunday)
+                    if (direcao == Direcao.Posterior)
+                        dtTmp = dtTmp.AddDays(1);
+                    else
+                        dtTmp = dtTmp.AddDays(-2);
+
+                if (dtTmp.DayOfWeek == DayOfWeek.Saturday)
+                    if (direcao == Direcao.Posterior)
+                        dtTmp = dtTmp.AddDays(2);
+                    else
+                        dtTmp = dtTmp.AddDays(-1);
+
+                //Se não for nem feriado local nem feriado estadual, achou a data
+                var feriado = feriados
+                    .Where((x => (x.DT_FERIADO == dtTmp && x.LOCAL == estadoTmp) || (x.DT_FERIADO == dtTmp && estadoTmp == todos)))
+                    .SingleOrDefault();
+
+                if (feriado == null)
+                {
+                    break;
+                }
+            }
+
+            return dtTmp;
         }
     }
 }

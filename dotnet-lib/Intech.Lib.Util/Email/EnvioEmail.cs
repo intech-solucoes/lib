@@ -140,10 +140,11 @@ namespace Intech.Lib.Util.Email
                 if (config.DesprezarCertificado)
                     client.ServerCertificateValidationCallback = (s, c, h, e) => true;
 
-                client.Connect(config.EnderecoSMTP, config.Porta, MailKit.Security.SecureSocketOptions.StartTls);
+                client.Connect(config.EnderecoSMTP, config.Porta, MailKit.Security.SecureSocketOptions.Auto);
 
                 // Note: only needed if the SMTP server requires authentication
-                client.Authenticate(config.Usuario, config.Senha);
+                if(config.RequerAutenticacao)
+                    client.Authenticate(config.Usuario, config.Senha);
 
                 client.Send(message);
                 client.Disconnect(true);

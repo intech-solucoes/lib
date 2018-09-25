@@ -21,6 +21,8 @@ namespace Intech.Lib.Web
 
         public string PublicacaoAPI { get; set; }
 
+        public List<string> EmailsCadastroContribuintes { get; set; }
+
         public static AppSettings Get()
         {
             var file = File.ReadAllText(NomeArquivo);
