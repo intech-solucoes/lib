@@ -10,6 +10,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="$(MSBuildThisFileDirectory)DMN_EFR_EFD.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DMN_SITUACAO_PROCESSAMENTO.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_SN.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_STATUS_EFD_UPLOAD.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_TIPO_INSCRICAO_EFD.cs" />
