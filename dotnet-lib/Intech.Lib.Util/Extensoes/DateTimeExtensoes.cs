@@ -199,6 +199,34 @@ namespace System
             return diferencaDatas.Days + 1;
         }
 
+        /// <summary>
+        /// Retorna o número de meses entre duas datas ignorando os dias.
+        /// 30/08/2007 e 01/10/2007 = 2 meses
+        /// </summary>
+        /// <param name="dataInicial">Data inicial</param>
+        /// <param name="dataFinal">Data final</param>
+        /// <returns>Número de meses entre duas datas</returns>
+        public static int MesesEntreDatas(this DateTime dataInicial, DateTime dataFinal)
+        {
+            int anos = dataFinal.Year - dataInicial.Year;
+            //anos * 12 é utilizado no caso da data final estar em um ano diferente da data de pagamento
+            return (anos * 12) + dataFinal.Month - dataInicial.Month;
+        }
+
+        /// <summary>
+        /// Retorna o números de meses entre duas datas ignorando os dias.
+        /// 30/08/2007 e 01/10/2007 = 3 meses => mês 8, 9 e 10.
+        /// </summary>
+        /// <param name="dataInicial"></param>
+        /// <param name="dataFinal"></param>
+        /// <param name="contagemComercial"></param>
+        /// <returns></returns>
+        public static int MesesEntreDatas(this DateTime dataInicial, DateTime dataFinal, bool contagemComercial)
+        {
+            int x = contagemComercial ? 1 : 0;
+            return MesesEntreDatas(dataInicial, dataFinal) + x;
+        }
+
         public enum Estado { AC, AL, AP, AM, BA, CE, DF, GO, ES, MA, MT, MS, MG, PA, PB, PR, PE, PI, RJ, RN, RS, RO, RR, SP, SC, SE, TO };
 
         public enum Direcao
