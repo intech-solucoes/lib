@@ -27,6 +27,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensoes\StringExtensoes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\Intervalo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\MesAno.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Relatorios\GeradorRelatorio.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Seguranca\Criptografia.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Validacoes\Validador.cs" />
   </ItemGroup>
