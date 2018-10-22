@@ -33,12 +33,12 @@ namespace Intech.Lib.Dapper
             Conexao.Open();
         }
 
-        public List<T> Listar()
+        public virtual List<T> Listar()
         {
             return Conexao.GetAll<T>().ToList();
         }
 
-        public T BuscarPorChave(object chave)
+        public virtual T BuscarPorChave(object chave)
         {
             return Conexao.Get<T>(chave);
         }
