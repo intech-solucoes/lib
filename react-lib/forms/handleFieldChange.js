@@ -1,4 +1,6 @@
-function handleFieldChange(context, event, parent = null) {
+function handleFieldChange(context, event) {
+    var parent = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : null;
+
     var name = event.target.name;
     var value = event.target.value;
 
