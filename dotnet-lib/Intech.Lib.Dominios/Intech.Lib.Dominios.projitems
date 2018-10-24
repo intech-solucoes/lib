@@ -13,6 +13,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)DMN_EFD_RETIFICADORA.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_SITUACAO_PROCESSAMENTO.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_REGISTRO_EFD.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)DMN_OPERACAO_REGISTRO.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_SN.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_STATUS_EFD_UPLOAD.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)DMN_TIPO_AMBIENTE_EFD.cs" />
