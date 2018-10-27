@@ -160,9 +160,9 @@ namespace System
         /// <param name="feriados"></param>
         /// <returns></returns>
         public static bool EhDiaUtil(this DateTime data, IEnumerable<DateTime> feriados) =>
-            data.DayOfWeek == DayOfWeek.Sunday
+            !(data.DayOfWeek == DayOfWeek.Sunday
             || data.DayOfWeek == DayOfWeek.Saturday
-            || feriados.Contains(data);
+            || feriados.Contains(data));
 
         /// <summary>
         /// Adiciona uma quantidade de dias uteis na data
