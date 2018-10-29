@@ -6,7 +6,7 @@ export default class BaseService {
     GetToken() {
         return new Promise((resolve, reject) => {
             try {
-                if(localStorage) {
+                if(typeof(localStorage) !== 'undefined') {
                     var token = localStorage.getItem("token");
                     resolve(token);
                 } else {
