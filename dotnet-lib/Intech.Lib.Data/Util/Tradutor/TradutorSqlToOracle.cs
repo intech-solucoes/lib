@@ -13,54 +13,57 @@ namespace Intech.Lib.Data.Util.Tradutor
 
     public class TradutorSqlToOracle
     {
-        private Tokenizer tokenizer;
+        private Tokenizer Tokenizer;
 
-        private Queue<Token> tokens;
+        private Queue<Token> Tokens;
 
-        private readonly Stack<TipoOperacao> pilhaOperacao = new Stack<TipoOperacao>();
+        private readonly Stack<TipoOperacao> PilhaOperacao = new Stack<TipoOperacao>();
 
-        private Token tokenAtual;
+        private Token TokenAtual;
 
-        private readonly List<string> listaSaida = new List<string>();
+        private bool GerarInsertComPK;
 
-        private TipoOperacao tipoOperacaoCorrente = TipoOperacao.Indefinida;
+        private readonly List<string> ListaSaida = new List<string>();
 
-        private readonly string[] operadores = new[] { "CASE" };
+        private TipoOperacao TipoOperacaoCorrente = TipoOperacao.Indefinida;
 
-        int topCount;
+        private readonly string[] Operadores = new[] { "CASE" };
+
+        int TopCount;
 
         public string SqlOriginal { get; private set; }
 
-        public string Traduz(string sql)
+        public string Traduz(string sql, bool gerarInsertComPK)
         {
-            listaSaida.Clear();
-            topCount = 0;
+            ListaSaida.Clear();
+            TopCount = 0;
             SqlOriginal = sql;
-            tokenizer = new Tokenizer(sql);
-            return Traduz(tokenizer.ObtemTokens());
+            Tokenizer = new Tokenizer(sql);
+            GerarInsertComPK = gerarInsertComPK;
+            return Traduz(Tokenizer.ObtemTokens());
         }
 
         private string Traduz(Queue<Token> tokens)
         {
-            this.tokens = tokens;
+            this.Tokens = tokens;
             leProximoToken();
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
             {
                 return traduzSelect();
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "INSERT"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "INSERT"))
             {
                 return traduzInsert();
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "UPDATE"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "UPDATE"))
             {
                 return traduzUpdate();
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "DELETE"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "DELETE"))
             {
                 return traduzDelete();
             }
-            throw new Exception("Comando não reconhecido: " + tokenAtual);
+            throw new Exception("Comando não reconhecido: " + TokenAtual);
         }
 
         private string traduzSelect()
@@ -117,20 +120,20 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             pulaTokenEsperado(TipoToken.PalavraChave, "INSERT");
             pulaTokenEsperado(TipoToken.PalavraChave, "INTO");
-            string nomeTabela = tokenAtual.Valor;
+            string nomeTabela = TokenAtual.Valor;
             string nomePk = obtemNomePk(nomeTabela);
             leProximoToken();
             string colunas = "";
-            bool autoincremento = true;
+            bool autoincremento = GerarInsertComPK;
             pulaTokenEsperado(TipoToken.Simbolo, "(");
-            while (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+            while (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
             {
-                if (tokenAtual.Equals(TipoToken.Palavra, nomePk))
+                if (TokenAtual.Equals(TipoToken.Palavra, nomePk))
                 {
                     autoincremento = false;
                 }
                 colunas += parseColunaOuVariavelOuFuncao();
-                if (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                if (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
                 {
                     pulaTokenEsperado(TipoToken.Simbolo, ",");
                     colunas += ", ";
@@ -142,12 +145,12 @@ namespace Intech.Lib.Data.Util.Tradutor
              * Traduzindo o INSERT SELECT 
              * É obrigatório informar as colunas do INSERT
              */
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
             {
                 var indiceSelect = SqlOriginal.IndexOf("SELECT");
                 string select = SqlOriginal.Substring(indiceSelect, SqlOriginal.Length - indiceSelect);
 
-                string selectTraduzido = Traduz(select);
+                string selectTraduzido = Traduz(select, GerarInsertComPK);
 
                 return string.Format("INSERT INTO {0} SELECT {1}.NEXTVAL,{2}",
                                         nomeTabela, nomePk, selectTraduzido.Replace("SELECT", string.Empty));
@@ -157,50 +160,47 @@ namespace Intech.Lib.Data.Util.Tradutor
                 pulaTokenEsperado(TipoToken.PalavraChave, "VALUES");
                 string valores = "";
                 pulaTokenEsperado(TipoToken.Simbolo, "(");
-                while (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                while (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
                 {
                     valores += parseColunaOuVariavelOuFuncao();
-                    if (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                    if (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
                     {
                         pulaTokenEsperado(TipoToken.Simbolo, ",");
                         valores += ", ";
                     }
                 }
                 pulaTokenEsperado(TipoToken.Simbolo, ")");
-                if (autoincremento)
+                if (GerarInsertComPK)
                 {
                     if (ehTabelaDeLog(nomeTabela))
-                    {
-                        return string.Format("INSERT INTO {0} ({3},{1}) VALUES ({4}.NEXTVAL,{2})",
-                                         nomeTabela, colunas, valores, nomePk, obtemNomeSequence(nomeTabela));
-                    }
-                    return string.Format("INSERT INTO {0} ({3},{1}) VALUES ({4}.NEXTVAL,{2}) RETURNING {3} INTO :PK",
-                                         nomeTabela, colunas, valores, nomePk, obtemNomeSequence(nomeTabela));
+                        return $"INSERT INTO {nomeTabela} ({nomePk},{colunas}) VALUES ({obtemNomeSequence(nomeTabela)}.NEXTVAL,{valores})";
 
+                    return $"INSERT INTO {nomeTabela} ({nomePk},{colunas}) VALUES ({obtemNomeSequence(nomeTabela)}.NEXTVAL,{valores}) RETURNING {nomePk} INTO :PK";
                 }
-                return string.Format("INSERT INTO {0} ({1}) VALUES ({2}) RETURNING {3} INTO :PK", nomeTabela, colunas, valores, nomePk);
+
+                return $"INSERT INTO {nomeTabela} ({colunas}) VALUES ({valores})";
             }
         }
 
         private string traduzUpdate()
         {
             pulaTokenEsperado(TipoToken.PalavraChave, "UPDATE");
-            string expressao = "UPDATE " + tokenAtual.Valor + " SET ";
+            string expressao = "UPDATE " + TokenAtual.Valor + " SET ";
             leProximoToken();
             pulaTokenEsperado(TipoToken.PalavraChave, "SET");
-            while (!fimDoSql && !tokenAtual.Equals(TipoToken.PalavraChave, "FROM") && !tokenAtual.Equals(TipoToken.PalavraChave, "WHERE"))
+            while (!fimDoSql && !TokenAtual.Equals(TipoToken.PalavraChave, "FROM") && !TokenAtual.Equals(TipoToken.PalavraChave, "WHERE"))
             {
                 string atribuicao = parseColunaOuVariavelOuFuncao();
                 pulaTokenEsperado(TipoToken.Simbolo, "=");
                 atribuicao += "=" + parseExpressao();
-                if (tokenAtual != null && tokenAtual.Equals(TipoToken.Simbolo, ","))
+                if (TokenAtual != null && TokenAtual.Equals(TipoToken.Simbolo, ","))
                 {
                     pulaTokenEsperado(TipoToken.Simbolo, ",");
                     atribuicao += ", ";
                 }
                 expressao += atribuicao;
             }
-            if (tokenAtual != null && tokenAtual.Equals(TipoToken.PalavraChave, "FROM"))
+            if (TokenAtual != null && TokenAtual.Equals(TipoToken.PalavraChave, "FROM"))
                 expressao += parseFrom();
             expressao += parseWhere();
 
@@ -215,7 +215,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             string expressao = "DELETE FROM ";
             pulaTokenEsperado(TipoToken.PalavraChave, "DELETE");
             pulaTokenEsperado(TipoToken.PalavraChave, "FROM");
-            expressao += tokenAtual.Valor;
+            expressao += TokenAtual.Valor;
             leProximoToken();
             expressao += parseWhere();
             //para reduzir a tamanho dos parâmetros os parâmetros que inicial com Original_
@@ -229,26 +229,26 @@ namespace Intech.Lib.Data.Util.Tradutor
             string valor = "SELECT ";
             pulaTokenEsperado(TipoToken.PalavraChave, "SELECT");
 
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "DISTINCT") ||
-                tokenAtual.Equals(TipoToken.PalavraChave, "ALL"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "DISTINCT") ||
+                TokenAtual.Equals(TipoToken.PalavraChave, "ALL"))
             {
-                valor += tokenAtual.Valor + " ";
+                valor += TokenAtual.Valor + " ";
                 leProximoToken();
             }
 
 
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "TOP"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "TOP"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "TOP");
-                if (tokenAtual.Tipo == TipoToken.Numero)
+                if (TokenAtual.Tipo == TipoToken.Numero)
                 {
-                    topCount = int.Parse(tokenAtual.Valor);
+                    TopCount = int.Parse(TokenAtual.Valor);
                     leProximoToken();
                 }
                 else
                 {
                     pulaTokenEsperado(TipoToken.Simbolo, "(");
-                    topCount = int.Parse(tokenAtual.Valor);
+                    TopCount = int.Parse(TokenAtual.Valor);
                     leProximoToken();
                     pulaTokenEsperado(TipoToken.Simbolo, ")");
                 }
@@ -256,7 +256,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
             while (!fimDoSelect)
             {
-                tipoOperacaoCorrente = TipoOperacao.Indefinida;
+                TipoOperacaoCorrente = TipoOperacao.Indefinida;
                 valor += parseAliasDeColuna(parseExpressao());
                 if (!fimDoSelect)
                 {
@@ -270,11 +270,11 @@ namespace Intech.Lib.Data.Util.Tradutor
         private string parseFrom()
         {
             string expressao = " FROM ";
-            pilhaOperacao.Clear();
+            PilhaOperacao.Clear();
             pulaTokenEsperado(TipoToken.PalavraChave, "FROM");
             while (!fimDoFrom)
             {
-                tipoOperacaoCorrente = TipoOperacao.Indefinida;
+                TipoOperacaoCorrente = TipoOperacao.Indefinida;
                 expressao += parseSourceTable();
             }
             return expressao;
@@ -283,27 +283,27 @@ namespace Intech.Lib.Data.Util.Tradutor
         private string parseWhere()
         {
             //[ WHERE <search_condition> ]
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "WHERE"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "WHERE"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "WHERE");
                 string expressao = " WHERE ";
                 expressao += parseExpressao();
-                if (topCount > 0)
+                if (TopCount > 0)
                 {
-                    expressao += string.Format(" AND ROWNUM <= {0} ", topCount);
+                    expressao += string.Format(" AND ROWNUM <= {0} ", TopCount);
                 }
                 return expressao;
             }
-            if (topCount > 0)
+            if (TopCount > 0)
             {
-                return string.Format(" WHERE ROWNUM <= {0} ", topCount);
+                return string.Format(" WHERE ROWNUM <= {0} ", TopCount);
             }
             return "";
         }
 
         private string parseGroupBy()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "GROUP"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "GROUP"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "GROUP");
                 pulaTokenEsperado(TipoToken.PalavraChave, "BY");
@@ -324,7 +324,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseHaving()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "HAVING"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "HAVING"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "HAVING");
                 return " HAVING " + parseExpressao();
@@ -334,7 +334,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseOrderBy()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "ORDER"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "ORDER"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "ORDER");
                 pulaTokenEsperado(TipoToken.PalavraChave, "BY");
@@ -342,12 +342,12 @@ namespace Intech.Lib.Data.Util.Tradutor
                 while (!fimDoOrderBy)
                 {
                     expressao += parseExpressaoBase();
-                    if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "DESC"))
+                    if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "DESC"))
                     {
                         pulaTokenEsperado(TipoToken.PalavraChave, "DESC");
                         expressao += " DESC";
                     }
-                    if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "ASC"))
+                    if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "ASC"))
                     {
                         pulaTokenEsperado(TipoToken.PalavraChave, "ASC");
                         expressao += " ASC";
@@ -365,7 +365,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseUnion()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "UNION"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "UNION"))
             {
                 //pulaTokenEsperado(TipoToken.PalavraChave, "UNION");
                 string expressao = " UNION ";
@@ -377,7 +377,7 @@ namespace Intech.Lib.Data.Util.Tradutor
                 }
 
                 TradutorSqlToOracle tradutor = new TradutorSqlToOracle();
-                expressao += tradutor.Traduz(tokens);
+                expressao += tradutor.Traduz(Tokens);
                 return expressao;
             }
             return "";
@@ -385,13 +385,13 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private void empilhaTipoOperacao(TipoOperacao tipo)
         {
-            pilhaOperacao.Push(tipoOperacaoCorrente);
-            tipoOperacaoCorrente = tipo;
+            PilhaOperacao.Push(TipoOperacaoCorrente);
+            TipoOperacaoCorrente = tipo;
         }
 
         private void desemplilhaTipoOperacao()
         {
-            tipoOperacaoCorrente = pilhaOperacao.Pop();
+            TipoOperacaoCorrente = PilhaOperacao.Pop();
         }
 
         private string parseExpressao()
@@ -403,24 +403,24 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseSubquery()
         {
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "SELECT"))
             {
                 int cont = 1;
                 Queue<Token> tokensSubquery = new Queue<Token>();
 
                 while (cont > 0)
                 {
-                    if (tokenAtual.Equals(TipoToken.Simbolo, "("))
+                    if (TokenAtual.Equals(TipoToken.Simbolo, "("))
                     {
                         cont += 1;
                     }
-                    else if (tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                    else if (TokenAtual.Equals(TipoToken.Simbolo, ")"))
                     {
                         cont -= 1;
                     }
                     if (cont > 0)
                     {
-                        tokensSubquery.Enqueue(tokenAtual);
+                        tokensSubquery.Enqueue(TokenAtual);
                         leProximoToken();
                     }
                 }
@@ -434,7 +434,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             string expressao = parseExpressaoOr();
 
-            while (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "AND"))
+            while (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "AND"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "AND");
                 expressao += " AND " + parseExpressaoOr();
@@ -447,7 +447,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             string expressao = parseIsNull();
 
-            while (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "OR"))
+            while (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "OR"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "OR");
                 expressao += " OR " + parseIsNull();
@@ -462,7 +462,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
             string expressao = parseExists();
 
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "IS"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "IS"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "IS");
                 expressao += " IS ";
@@ -478,16 +478,16 @@ namespace Intech.Lib.Data.Util.Tradutor
             //string expressao = parseIn();
             string expressao = parseNot();
 
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "EXISTS"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "EXISTS"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "EXISTS");
                 expressao += " EXISTS ";
                 pulaTokenEsperado(TipoToken.Simbolo, "(");
                 string valor = "";
-                while (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                while (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
                 {
                     valor += parseExpressao();
-                    if (tokenAtual.Equals(TipoToken.Simbolo, ","))
+                    if (TokenAtual.Equals(TipoToken.Simbolo, ","))
                     {
                         pulaTokenEsperado(TipoToken.Simbolo, ",");
                         valor += ", ";
@@ -508,16 +508,16 @@ namespace Intech.Lib.Data.Util.Tradutor
 
             expressao += parseNot();
 
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "IN"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "IN"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "IN");
                 expressao += " IN ";
                 pulaTokenEsperado(TipoToken.Simbolo, "(");
                 string valor = "";
-                while (!tokenAtual.Equals(TipoToken.Simbolo, ")"))
+                while (!TokenAtual.Equals(TipoToken.Simbolo, ")"))
                 {
                     valor += parseExpressao();
-                    if (tokenAtual.Equals(TipoToken.Simbolo, ","))
+                    if (TokenAtual.Equals(TipoToken.Simbolo, ","))
                     {
                         pulaTokenEsperado(TipoToken.Simbolo, ",");
                         valor += ", ";
@@ -536,7 +536,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
             expressao += parseNot();
 
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "LIKE"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "LIKE"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "LIKE");
                 expressao += " LIKE ";
@@ -548,7 +548,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseNot()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "NOT"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "NOT"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "NOT");
                 return " NOT ";
@@ -560,7 +560,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             string expressao = parseComparacao();
 
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "BETWEEN"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "BETWEEN"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "BETWEEN");
                 expressao += parseNot();
@@ -578,11 +578,11 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             string expressao = parseExpressaoAdicao();
 
-            if (!fimDoSql && tokenAtual.Tipo == TipoToken.Simbolo &&
-                (tokenAtual.Valor == "=" || tokenAtual.Valor == "<=" || tokenAtual.Valor == "<" || tokenAtual.Valor == ">=" ||
-                 tokenAtual.Valor == ">" || tokenAtual.Valor == "<>"))
+            if (!fimDoSql && TokenAtual.Tipo == TipoToken.Simbolo &&
+                (TokenAtual.Valor == "=" || TokenAtual.Valor == "<=" || TokenAtual.Valor == "<" || TokenAtual.Valor == ">=" ||
+                 TokenAtual.Valor == ">" || TokenAtual.Valor == "<>"))
             {
-                expressao += tokenAtual.Valor;
+                expressao += TokenAtual.Valor;
                 leProximoToken();
                 expressao += parseExpressaoAdicao();
             }
@@ -615,12 +615,12 @@ namespace Intech.Lib.Data.Util.Tradutor
             {
                 empilhaTipoOperacao(TipoOperacao.Indefinida);
             }
-            while (!fimDoSql && (tokenAtual.Valor == "+" || tokenAtual.Valor == "-" || tokenAtual.Valor == "*" || tokenAtual.Valor == "/"))
+            while (!fimDoSql && (TokenAtual.Valor == "+" || TokenAtual.Valor == "-" || TokenAtual.Valor == "*" || TokenAtual.Valor == "/"))
             {
-                if (tokenAtual.Equals(TipoToken.Simbolo, "+"))
+                if (TokenAtual.Equals(TipoToken.Simbolo, "+"))
                 {
                     pulaTokenEsperado(TipoToken.Simbolo, "+");
-                    switch (tipoOperacaoCorrente)
+                    switch (TipoOperacaoCorrente)
                     {
                         case TipoOperacao.Concatenacao:
                             valor += " || " + parseExpressaoBase();
@@ -633,16 +633,16 @@ namespace Intech.Lib.Data.Util.Tradutor
                                                 "da expressão para determinar se é uma expressão de adição ou concatenação");
                     }
                 }
-                else if(tokenAtual.Equals(TipoToken.Simbolo, "*"))
+                else if(TokenAtual.Equals(TipoToken.Simbolo, "*"))
                 {
-                    valor += tokenAtual.Valor;
+                    valor += TokenAtual.Valor;
                     //pula o token atual
                     leProximoToken();
                 }
                 //-(subtração) | *(multiplicação) | /(divisão)
                 else
                 {
-                    valor += " " + tokenAtual.Valor + " ";
+                    valor += " " + TokenAtual.Valor + " ";
                     //pula o token atual
                     leProximoToken();
                     valor += parseColunaOuVariavelOuFuncao();
@@ -661,10 +661,10 @@ namespace Intech.Lib.Data.Util.Tradutor
         /// <returns></returns>
         private string parseAliasDeColuna(string valor)
         {
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "AS"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "AS"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "AS");
-                valor = string.Format("{0} AS {1}", valor, tokenAtual.Valor);
+                valor = string.Format("{0} AS {1}", valor, TokenAtual.Valor);
                 leProximoToken();
             }
             return valor;
@@ -677,10 +677,10 @@ namespace Intech.Lib.Data.Util.Tradutor
         /// <returns></returns>
         private string parseAliasDeTabela(string valor)
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "AS"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "AS"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "AS");
-                valor = string.Format("{0} {1}", valor, tokenAtual.Valor);
+                valor = string.Format("{0} {1}", valor, TokenAtual.Valor);
                 leProximoToken();
             }
             return valor;
@@ -696,12 +696,12 @@ namespace Intech.Lib.Data.Util.Tradutor
             parseWith();
             parseNoLock();
 
-            while (!fimDoFrom && !tokenAtual.Equals(TipoToken.Simbolo, ","))
+            while (!fimDoFrom && !TokenAtual.Equals(TipoToken.Simbolo, ","))
             {
                 joinedTable += parseJoinedTable();
             }
 
-            if (!fimDoFrom && tokenAtual.Equals(TipoToken.Simbolo, ","))
+            if (!fimDoFrom && TokenAtual.Equals(TipoToken.Simbolo, ","))
             {
                 pulaTokenEsperado(TipoToken.Simbolo, ",");
                 return tabela + ", ";
@@ -713,7 +713,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private void parseNoLock()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.Simbolo, "("))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.Simbolo, "("))
             {
                 pulaTokenEsperado(TipoToken.Simbolo, "(");
                 pulaTokenEsperado(TipoToken.PalavraChave, "NOLOCK");
@@ -727,7 +727,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private void parseWith()
         {
-            if (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "WITH"))
+            if (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "WITH"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "WITH");
             }
@@ -740,7 +740,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             string join;
             string tabela;
 
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "CROSS"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "CROSS"))
             {
                 join = parseJoin();
                 tabela = parseAliasDeTabela(parseExpressaoBase());
@@ -752,7 +752,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             parseWith();
             parseNoLock();
             string expressao = "";
-            while (!fimDoSql && tokenAtual.Equals(TipoToken.PalavraChave, "ON"))
+            while (!fimDoSql && TokenAtual.Equals(TipoToken.PalavraChave, "ON"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "ON");
 
@@ -766,32 +766,32 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             // [ { INNER | { { LEFT | RIGHT | FULL } [ OUTER ] } } [ <join_hint> ] ] JOIN
             string valor = " ";
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "CROSS"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "CROSS"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "CROSS");
                 pulaTokenEsperado(TipoToken.PalavraChave, "JOIN");
                 valor += "CROSS JOIN ";
                 return valor;
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "INNER"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "INNER"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "INNER");
                 valor += "INNER ";
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "LEFT") ||
-                tokenAtual.Equals(TipoToken.PalavraChave, "RIGHT") ||
-                tokenAtual.Equals(TipoToken.PalavraChave, "FULL"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "LEFT") ||
+                TokenAtual.Equals(TipoToken.PalavraChave, "RIGHT") ||
+                TokenAtual.Equals(TipoToken.PalavraChave, "FULL"))
             {
-                valor += tokenAtual.Valor;
+                valor += TokenAtual.Valor;
                 leProximoToken();
-                if (tokenAtual.Equals(TipoToken.PalavraChave, "OUTER"))
+                if (TokenAtual.Equals(TipoToken.PalavraChave, "OUTER"))
                 {
                     pulaTokenEsperado(TipoToken.PalavraChave, "OUTER");
                     valor += " OUTER";
                 }
 
             }
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "JOIN"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "JOIN"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "JOIN");
                 valor += " JOIN";
@@ -803,7 +803,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         {
             verificaFimInesperadoDoSql();
 
-            switch (tokenAtual.Tipo)
+            switch (TokenAtual.Tipo)
             {
                 case TipoToken.Numero:
                 case TipoToken.String:
@@ -813,15 +813,15 @@ namespace Intech.Lib.Data.Util.Tradutor
                 case TipoToken.Palavra:
                     return parseColunaOuVariavelOuFuncao();
                 default:
-                    if (tokenAtual.Equals(TipoToken.Simbolo, "("))
+                    if (TokenAtual.Equals(TipoToken.Simbolo, "("))
                     {
                         return parseExpressaoAgrupadora();
                     }
-                    if (tokenAtual.Equals(TipoToken.Simbolo, "*"))
+                    if (TokenAtual.Equals(TipoToken.Simbolo, "*"))
                     {
                         return parseColunaOuVariavelOuFuncao();
                     }
-                    throw new Exception("Tipo de token não esperado: " + tokenAtual);
+                    throw new Exception("Tipo de token não esperado: " + TokenAtual);
             }
         }
 
@@ -839,7 +839,7 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseConstate()
         {
-            string valor = tokenAtual.Tipo == TipoToken.Numero ? tokenAtual.Valor : string.Format("'{0}'", tokenAtual.Valor);
+            string valor = TokenAtual.Tipo == TipoToken.Numero ? TokenAtual.Valor : string.Format("'{0}'", TokenAtual.Valor);
             //pula a constante já lida e passa para o próximo token
             leProximoToken();
             return valor;
@@ -847,10 +847,10 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private string parseColunaOuVariavelOuFuncao()
         {
-            string valor = tokenAtual.Valor;
+            string valor = TokenAtual.Valor;
             //caso seja uma variável ou uma coluna o valor já está lido
 
-            if (tokenAtual.Tipo == TipoToken.Variavel)
+            if (TokenAtual.Tipo == TipoToken.Variavel)
             {
                 valor = ":" + valor;
                 leProximoToken();
@@ -859,13 +859,13 @@ namespace Intech.Lib.Data.Util.Tradutor
 
             leProximoToken();
 
-            if (operadores.Contains(valor))
+            if (Operadores.Contains(valor))
             {
                 return parseOperador(valor);
             }
 
             //se o token atual for um '(' então é preciso continuar lendo pois uma chamada a função foi encontrada
-            if (tokenAtual != null && tokenAtual.Equals(TipoToken.Simbolo, "("))
+            if (TokenAtual != null && TokenAtual.Equals(TipoToken.Simbolo, "("))
             {
                 if (proximoTokenIgualA(TipoToken.PalavraChave, "NOLOCK"))
                 {
@@ -920,14 +920,14 @@ namespace Intech.Lib.Data.Util.Tradutor
             string valor = "CASE ";
 
             //Simple CASE
-            if (!tokenAtual.Equals(TipoToken.PalavraChave, "WHEN"))
+            if (!TokenAtual.Equals(TipoToken.PalavraChave, "WHEN"))
             {
                 //input_expression
                 valor += parseExpressao();
             }
 
             //WHEN Boolean_expression THEN result_expression [ ...n ] 
-            while (tokenAtual.Equals(TipoToken.PalavraChave, "WHEN"))
+            while (TokenAtual.Equals(TipoToken.PalavraChave, "WHEN"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "WHEN");
 
@@ -941,7 +941,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             }
 
             //[ ELSE else_result_expression ] 
-            if (tokenAtual.Equals(TipoToken.PalavraChave, "ELSE"))
+            if (TokenAtual.Equals(TipoToken.PalavraChave, "ELSE"))
             {
                 pulaTokenEsperado(TipoToken.PalavraChave, "ELSE");
 
@@ -1004,16 +1004,16 @@ namespace Intech.Lib.Data.Util.Tradutor
         private string traduzDateAdd()
         {
             //DATEADD (datepart , number, date )
-            string datepart = tokenAtual.Valor;
+            string datepart = TokenAtual.Valor;
             leProximoToken();
             pulaTokenEsperado(TipoToken.Simbolo, ",");
             string sinal = string.Empty;
             /* Zenildo
              * A criação da variavel 'sinal' é para que a função DataAdd aceite números negativos nos casos de decrementar meses ou anos.
              */
-            if (tokenAtual.Valor == "-")
+            if (TokenAtual.Valor == "-")
             {
-                sinal = tokenAtual.Valor;
+                sinal = TokenAtual.Valor;
                 pulaTokenEsperado(TipoToken.Simbolo, "-");
             }
 
@@ -1110,7 +1110,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             string formato = null;
 
             //possui o bloco de formatação opcional "[, style]"
-            if (tokenAtual.Equals(TipoToken.Simbolo, ","))
+            if (TokenAtual.Equals(TipoToken.Simbolo, ","))
             {
                 pulaTokenEsperado(TipoToken.Simbolo, ",");
                 //style
@@ -1146,21 +1146,21 @@ namespace Intech.Lib.Data.Util.Tradutor
         private string parseDataType()
         {
             //data_type [ ( length ) ]
-            string datatype = tokenAtual.Valor;
+            string datatype = TokenAtual.Valor;
 
             //passa para o próximo caracter
             leProximoToken();
 
             //se a função CAST definir um tamanho (lenght) para o data_type
             //este código irá ignorar esta declaração pois o Oralce não utiliza esta informação
-            if (tokenAtual.Equals(TipoToken.Simbolo, "("))
+            if (TokenAtual.Equals(TipoToken.Simbolo, "("))
             {
                 //pula o parentese
                 pulaTokenEsperado(TipoToken.Simbolo, "(");
                 //pula a parte inteira do número
                 leProximoToken();
                 //pula a parte decimal do número (caso exista)
-                if (tokenAtual.Equals(TipoToken.Simbolo, ","))
+                if (TokenAtual.Equals(TipoToken.Simbolo, ","))
                 {
                     pulaTokenEsperado(TipoToken.Simbolo, ",");
                     leProximoToken();
@@ -1198,7 +1198,7 @@ namespace Intech.Lib.Data.Util.Tradutor
                     funcao = "TO_NUMBER({0})";
                     break;
                 default:
-                    throw new Exception("Parâmetro inválido para função CAST: " + tokenAtual.Valor);
+                    throw new Exception("Parâmetro inválido para função CAST: " + TokenAtual.Valor);
             }
 
             return string.Format(funcao, valor);
@@ -1234,7 +1234,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         /// </summary>
         private bool fimDoSelect
         {
-            get { return tokenAtual.Equals(TipoToken.PalavraChave, "FROM"); }
+            get { return TokenAtual.Equals(TipoToken.PalavraChave, "FROM"); }
         }
 
         /// <summary>
@@ -1245,10 +1245,10 @@ namespace Intech.Lib.Data.Util.Tradutor
             get
             {
                 return fimDoSql ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "WHERE") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "GROUP") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "UNION");
+                       TokenAtual.Equals(TipoToken.PalavraChave, "WHERE") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "GROUP") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "UNION");
             }
         }
 
@@ -1260,9 +1260,9 @@ namespace Intech.Lib.Data.Util.Tradutor
             get
             {
                 return fimDoSql ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "HAVING") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "UNION");
+                       TokenAtual.Equals(TipoToken.PalavraChave, "HAVING") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "UNION");
             }
         }
 
@@ -1274,8 +1274,8 @@ namespace Intech.Lib.Data.Util.Tradutor
             get
             {
                 return fimDoSql ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "UNION");
+                       TokenAtual.Equals(TipoToken.PalavraChave, "ORDER") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "UNION");
             }
         }
 
@@ -1287,7 +1287,7 @@ namespace Intech.Lib.Data.Util.Tradutor
             get
             {
                 return fimDoSql ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "UNION");
+                       TokenAtual.Equals(TipoToken.PalavraChave, "UNION");
             }
         }
         /// <summary>
@@ -1295,7 +1295,7 @@ namespace Intech.Lib.Data.Util.Tradutor
         /// </summary>
         private bool fimDoSql
         {
-            get { return tokenAtual == null || tokenAtual.Equals(TipoToken.Simbolo, ";"); }
+            get { return TokenAtual == null || TokenAtual.Equals(TipoToken.Simbolo, ";"); }
         }
 
         /// <summary>
@@ -1306,8 +1306,8 @@ namespace Intech.Lib.Data.Util.Tradutor
             get
             {
                 return fimDoSelect ||
-                       tokenAtual.Equals(TipoToken.Simbolo, ",") ||
-                       tokenAtual.Equals(TipoToken.PalavraChave, "AS");
+                       TokenAtual.Equals(TipoToken.Simbolo, ",") ||
+                       TokenAtual.Equals(TipoToken.PalavraChave, "AS");
             }
         }
 
@@ -1333,9 +1333,9 @@ namespace Intech.Lib.Data.Util.Tradutor
         private void pulaTokenEsperado(TipoToken tipo, string valor)
         {
             verificaFimInesperadoDoSql();
-            if (!tokenAtual.Equals(tipo, valor))
+            if (!TokenAtual.Equals(tipo, valor))
             {
-                throw new Exception(string.Format("Valor esperado: '{0}' diferente do encontrado:{1}", valor, tokenAtual.Valor));
+                throw new Exception(string.Format("Valor esperado: '{0}' diferente do encontrado:{1}", valor, TokenAtual.Valor));
             }
             leProximoToken();
         }
@@ -1345,8 +1345,8 @@ namespace Intech.Lib.Data.Util.Tradutor
         /// </summary>
         private void leProximoToken()
         {
-            tokenAtual = tokens.Count > 0 ? tokens.Dequeue() : null;
-            if (tokenAtual != null && (tokenAtual.Equals(TipoToken.Simbolo, "[") || tokenAtual.Equals(TipoToken.Simbolo, "]")))
+            TokenAtual = Tokens.Count > 0 ? Tokens.Dequeue() : null;
+            if (TokenAtual != null && (TokenAtual.Equals(TipoToken.Simbolo, "[") || TokenAtual.Equals(TipoToken.Simbolo, "]")))
             {
                 leProximoToken();
             }
@@ -1354,9 +1354,9 @@ namespace Intech.Lib.Data.Util.Tradutor
 
         private bool proximoTokenIgualA(TipoToken tipo, string valor)
         {
-            if (tokens.Count > 0)
+            if (Tokens.Count > 0)
             {
-                Token tk = tokens.Peek();
+                Token tk = Tokens.Peek();
                 return tk.Equals(tipo, valor);
             }
             return false;
