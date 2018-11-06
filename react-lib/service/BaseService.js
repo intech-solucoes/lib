@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const apiUrl = process.env.API_URL;
+var config = require("../../../../src/config.json");
+
+const apiUrl = config.apiUrl;
 
 export default class BaseService {
     GetToken() {
@@ -24,7 +26,6 @@ export default class BaseService {
         return new Promise((resolve, reject) => {
             this.GetToken()
                 .then(token => {
-
                     axios({
                         method: tipo,
                         url: apiUrl + url,
@@ -35,7 +36,6 @@ export default class BaseService {
                     })
                     .then(resolve)
                     .catch(reject);
-
                 });
         });
     }
@@ -44,7 +44,6 @@ export default class BaseService {
         return new Promise((resolve, reject) => {
             this.GetToken()
                 .then(token => {
-
                     axios({
                         method: tipo,
                         url: apiUrl + url,
@@ -56,7 +55,6 @@ export default class BaseService {
                     })
                     .then(resolve)
                     .catch(reject);
-
                 });
         });
     }
