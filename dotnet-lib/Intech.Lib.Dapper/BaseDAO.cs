@@ -35,27 +35,62 @@ namespace Intech.Lib.Dapper
 
         public virtual List<T> Listar()
         {
-            return Conexao.GetAll<T>().ToList();
+            try
+            {
+                return Conexao.GetAll<T>().ToList();
+            }
+            finally
+            {
+                Conexao.Close();
+            }
         }
 
         public virtual T BuscarPorChave(object chave)
         {
-            return Conexao.Get<T>(chave);
+            try
+            {
+                return Conexao.Get<T>(chave);
+            }
+            finally
+            {
+                Conexao.Close();
+            }
         }
 
         public virtual long Inserir(T entidade)
         {
-            return Conexao.Insert(entidade);
+            try
+            {
+                return Conexao.Insert(entidade);
+            }
+            finally
+            {
+                Conexao.Close();
+            }
         }
 
         public virtual bool Atualizar(T entidade)
         {
-            return Conexao.Update(entidade);
+            try
+            {
+                return Conexao.Update(entidade);
+            }
+            finally
+            {
+                Conexao.Close();
+            }
         }
 
         public virtual bool Deletar(T entidade)
         {
-            return Conexao.Delete(entidade);
+            try
+            {
+                return Conexao.Delete(entidade);
+            }
+            finally
+            {
+                Conexao.Close();
+            }
         }
 
         public void Dispose()
