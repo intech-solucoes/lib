@@ -20,6 +20,7 @@
     <Compile Include="$(MSBuildThisFileDirectory)Date\CalculoAnosMesesDiasAlgoritmo2.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\CalculoAnosMesesDiasStrategy.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\IPeriodo.cs" />
+    <Compile Include="$(MSBuildThisFileDirectory)Email\ConfigEConsig.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Email\ConfigEmail.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Email\EnvioEmail.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Extensoes\DateTimeExtensoes.cs" />
@@ -27,7 +28,6 @@
     <Compile Include="$(MSBuildThisFileDirectory)Extensoes\StringExtensoes.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\Intervalo.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Date\MesAno.cs" />
-    <Compile Include="$(MSBuildThisFileDirectory)Relatorios\GeradorRelatorio.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Seguranca\Criptografia.cs" />
     <Compile Include="$(MSBuildThisFileDirectory)Validacoes\Validador.cs" />
   </ItemGroup>

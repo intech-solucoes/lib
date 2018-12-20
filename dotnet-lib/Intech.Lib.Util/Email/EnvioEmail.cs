@@ -3,6 +3,7 @@ using MimeKit;
 using MimeKit.Text;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net;
 using System.Net.Mail;
 using System.Net.Security;
@@ -17,15 +18,15 @@ namespace Intech.Lib.Util.Email
         private static Encoding EncodingEmail = Encoding.GetEncoding("ISO-8859-1");
 
         public static void Enviar(ConfigEmail config, string para, string assunto, string corpo) =>
-            Enviar(config, para, null, null, assunto, corpo, null);
+            Enviar(config, para, null, null, assunto, corpo, null, null);
 
         public static void Enviar(ConfigEmail config, string para, string cc, string assunto, string corpo) => 
-            Enviar(config, para, cc, null, assunto, corpo, null);
+            Enviar(config, para, cc, null, assunto, corpo, null, null);
 
         public static void Enviar(ConfigEmail config, string para, string cc, string cco, string assunto, string corpo) =>
-            Enviar(config, para, cc, cco, assunto, corpo, null);
+            Enviar(config, para, cc, cco, assunto, corpo, null, null);
 
-        public static void Enviar(ConfigEmail config, string para, string cc, string cco, string assunto, string corpo, string anexo, bool copiaParaRemetente = false)
+        public static void Enviar(ConfigEmail config, string para, string cc, string cco, string assunto, string corpo, Stream anexo, string tituloAnexo, bool copiaParaRemetente = false)
         {
             var email = new MailMessage
             {
@@ -63,8 +64,8 @@ namespace Intech.Lib.Util.Email
             }
 
             // Adiciona anexos
-            if (!string.IsNullOrEmpty(anexo))
-                email.Attachments.Add(new Attachment(anexo));
+            if (anexo != null)
+                email.Attachments.Add(new Attachment(anexo, tituloAnexo));
 
             // Configura client
             var smtp = new SmtpClient
