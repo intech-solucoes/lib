@@ -59,6 +59,26 @@ export default class BaseService {
         });
     }
 
+    CriarRequisicaoZip(tipo, url, data = null) {
+        console.log('zip');
+        return new Promise((resolve, reject) => {
+            this.GetToken()
+                .then(token => {
+                    axios({
+                        method: tipo,
+                        url: apiUrl + url,
+                        data: data,
+                        headers: {
+                            "Authorization": "Bearer " + token
+                        },
+                        responseType: 'arraybuffer'
+                    })
+                    .then(resolve)
+                    .catch(reject);
+                });
+        });
+    }
+
     FormatarData(data) {
         return data.replace(new RegExp('/', 'g'), '.');
     }
