@@ -9,7 +9,7 @@ using System.IO;
 using System.Linq;
 #endregion
 
-namespace Intech.Lib.Util.Relatorios
+namespace Intech.Lib.Relatorios
 {
     public class GeradorRelatorio
     {
