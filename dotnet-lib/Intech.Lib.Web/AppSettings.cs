@@ -17,6 +17,8 @@ namespace Intech.Lib.Web
 
         public ConfigEmail Email { get; set; }
 
+        public ConfigEConsig EConsig { get; set; }
+
         public string PublicacaoPortal { get; set; }
 
         public string PublicacaoAPI { get; set; }
