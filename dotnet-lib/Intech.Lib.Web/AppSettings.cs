@@ -19,6 +19,8 @@ namespace Intech.Lib.Web
 
         public ConfigEConsig EConsig { get; set; }
 
+        public ConfigServicos Servicos { get; set; }
+
         public string PublicacaoPortal { get; set; }
 
         public string PublicacaoAPI { get; set; }
@@ -33,5 +35,10 @@ namespace Intech.Lib.Web
 
         public static bool IS_SQL_SERVER_PROVIDER => Get().ConnectionProvider == "sqlserver";
         public static bool IS_ORACLE_PROVIDER => Get().ConnectionProvider == "oracle";
+    }
+
+    public class ConfigServicos
+    {
+        public string AutenticacaoGSM { get; set; }
     }
 }
