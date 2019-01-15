@@ -1,6 +1,6 @@
 import axios from "axios";
 
-var config = require("../../../../src/config.json");
+var config = require("../../../src/config.json");
 
 const apiUrl = config.apiUrl;
 
@@ -60,7 +60,6 @@ export default class BaseService {
     }
 
     CriarRequisicaoZip(tipo, url, data = null) {
-        console.log('zip');
         return new Promise((resolve, reject) => {
             this.GetToken()
                 .then(token => {

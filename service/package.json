@@ -1,0 +1,11 @@
+{
+ "name": "@intechprev/service",
+ "version": "1.0.2",
+ "main": "index.js",
+ "scripts": {
+  "publish:npm": "npm publish --access public"
+ },
+ "dependencies": {
+  "axios": "^0.18.0"
+ }
+}
