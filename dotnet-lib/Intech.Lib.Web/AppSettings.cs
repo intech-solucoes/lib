@@ -17,6 +17,8 @@ namespace Intech.Lib.Web
 
         public ConfigEmail Email { get; set; }
 
+        public ConfigSMS SMS { get; set; }
+
         public ConfigEConsig EConsig { get; set; }
 
         public ConfigServicos Servicos { get; set; }
@@ -40,5 +42,11 @@ namespace Intech.Lib.Web
     public class ConfigServicos
     {
         public string AutenticacaoGSM { get; set; }
+    }
+
+    public class ConfigSMS
+    {
+        public string Usuario { get; set; }
+        public string Senha { get; set; }
     }
 }
