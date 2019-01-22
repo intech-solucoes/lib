@@ -81,4 +81,16 @@ export default class BaseService {
     FormatarData(data) {
         return data.replace(new RegExp('/', 'g'), '.');
     }
+
+    MontarRota(controller, versao, rota) {
+        var rotaFinal = `/${controller}`;
+
+        if(versao && versao !== "")
+            rotaFinal = `${rotaFinal}/${versao}`;
+
+        if(rota && rota !== "")
+            rotaFinal = `${rotaFinal}/${rota}`;
+
+        return rotaFinal;
+    }
 }
