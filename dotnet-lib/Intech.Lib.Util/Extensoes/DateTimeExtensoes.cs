@@ -128,7 +128,11 @@ namespace System
         public static DateTime UltimoDiaDoMes(this DateTime data)
         {
             var proximoMes = data.AddMonths(1);
-            return proximoMes.AddDays(-proximoMes.Day);
+            var ultimoDia = proximoMes.AddDays(-proximoMes.Day);
+
+            ultimoDia = new DateTime(ultimoDia.Year, ultimoDia.Month, ultimoDia.Day);
+
+            return ultimoDia;
         }
 
         /// <summary>
