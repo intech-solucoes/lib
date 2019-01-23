@@ -1,6 +1,6 @@
 {
  "name": "@intechprev/service",
- "version": "1.0.2",
+ "version": "3.0.0",
  "main": "index.js",
  "scripts": {
   "publish:npm": "npm publish --access public"
