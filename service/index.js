@@ -22,6 +22,21 @@ export default class BaseService {
         });
     }
 
+    VerificarAdmin () {
+        return new Promise((resolve, reject) => {
+            axios({
+                method: "GET",
+                url: apiUrl + "/usuario/admin",
+                data: {},
+                headers: {
+                    "Authorization": "Bearer " + localStorage.getItem("token-admin")
+                }
+            })
+            .then(resolve)
+            .catch(reject);
+        });
+    }
+
     CriarRequisicao(tipo, url, data = null) {
         return new Promise((resolve, reject) => {
             this.GetToken()
